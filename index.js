@@ -87,12 +87,12 @@ app.post('/admin/login', async (req, res) => {
 
 // Crear supervisor
 app.post('/supervisores', async (req, res) => {
-  const { cedula, nombre, correo, password } = req.body;
+  const { cedula, nombre, correo, contraseña } = req.body;
 
   try {
     await pool.query(
-      'INSERT INTO supervisor (cedula, nombre, correo, password) VALUES ($1, $2, $3, $4)',
-      [cedula, nombre, correo, password]
+      'INSERT INTO supervisor (cedula, nombre, correo, contraseña) VALUES ($1, $2, $3, $4)',
+      [cedula, nombre, correo, contraseña]
     );
     res.json({ status: '✅ Supervisor creado correctamente' });
   } catch (err) {
