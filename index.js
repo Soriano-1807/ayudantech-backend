@@ -87,8 +87,10 @@ app.post('/admin/login', async (req, res) => {
 
 // Crear supervisor
 app.post('/supervisores', async (req, res) => {
-  const { cedula, nombre, correo, contraseña } = req.body;
-
+  const { cedula, nombre, correo} = req.body;
+  //contrasena aleatoria generada
+  const contraseña = crypto.randomBytes(4).toString('hex'); 
+  
   try {
     await pool.query(
       'INSERT INTO supervisor (cedula, nombre, correo, contraseña) VALUES ($1, $2, $3, $4)',
