@@ -85,6 +85,72 @@ app.post('/admin/login', async (req, res) => {
   }
 });
 
+// Crear supervisor
+app.post('/supervisores', async (req, res) => {
+  const { cedula, nombre, correo, password } = req.body;
+
+  try {
+    await pool.query(
+      'INSERT INTO supervisor (cedula, nombre, correo, password) VALUES ($1, $2, $3, $4)',
+      [cedula, nombre, correo, password]
+    );
+    res.json({ status: '✅ Supervisor creado correctamente' });
+  } catch (err) {
+    console.error('❌ Error al crear supervisor:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+// Buscar supervisor por cédula
+app.get('/supervisores/:cedula', async (req, res) => {
+  const { cedula } = req.params;
+  try {
+    const result = await pool.query('SELECT * FROM supervisor WHERE cedula = $1', [cedula]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: '❌ Supervisor no encontrado' });
+    }
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Listar todos los supervisores
+app.get('/supervisores', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM supervisor');
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Listar todas las facultades
+app.get('/facultades', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM facultad');
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Listar carreras de una facultad específica
+app.get('/facultades/:id/carreras', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await pool.query(
+      'SELECT * FROM carrera WHERE id_facultad = $1',
+      [id]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
 // Servidor
 app.listen(PORT, () => {
   console.log(`🚀 Backend corriendo en el puerto ${PORT}`);
