@@ -33,6 +33,8 @@ app.get('/', (req, res) => {
   res.json({ status: 'Backend activo ✅' });
 });
 
+const PORT = process.env.PORT || 3000;
+
 // Ejemplo: listar ayudantes
 app.get('/ayudantes', async (req, res) => {
   try {
@@ -61,7 +63,6 @@ app.post('/ayudantes', async (req, res) => {
 
 
 // Servidor
-const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`🚀 Backend corriendo en http://localhost:${PORT}`);
 });
