@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');
+const crypto = require('crypto');
 require('dotenv').config();
 
 const app = express();
@@ -48,6 +49,8 @@ app.get('/ayudantes', async (req, res) => {
 //crear ayudante
 app.post('/ayudantes', async (req, res) => {
   const { cedula, nombre, correo, nivel, facultad, carrera } = req.body;
+  //contrasena aleatoria generada
+  const password = crypto.randomBytes(4).toString('hex'); 
 
   try {
     await pool.query(
@@ -64,5 +67,6 @@ app.post('/ayudantes', async (req, res) => {
 
 // Servidor
 app.listen(PORT, () => {
-  console.log(`🚀 Backend corriendo en http://localhost:${PORT}`);
+  console.log(`🚀 Backend corriendo en el puerto ${PORT}`);
+  console.log('🌐 En producción, accede con la URL de Railway.');
 });
