@@ -54,8 +54,8 @@ app.post('/ayudantes', async (req, res) => {
 
   try {
     await pool.query(
-      'INSERT INTO ayudante (cedula, nombre, correo, nivel, facultad, carrera) VALUES ($1, $2, $3, $4, $5, $6)',
-      [cedula, nombre, correo, nivel, facultad, carrera]
+      'INSERT INTO ayudante (cedula, nombre, correo, nivel, facultad, carrera, password) VALUES ($1, $2, $3, $4, $5, $6, $7)',
+      [cedula, nombre, correo, nivel, facultad, carrera, password]
     );
     res.json({ status: '✅ Ayudante creado correctamente' });
   } catch (err) {
