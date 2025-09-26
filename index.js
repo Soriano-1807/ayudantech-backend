@@ -57,7 +57,7 @@ app.post('/ayudantes', async (req, res) => {
       'INSERT INTO ayudante (cedula, nombre, correo, nivel, facultad, carrera, password) VALUES ($1, $2, $3, $4, $5, $6, $7)',
       [cedula, nombre, correo, nivel, facultad, carrera, password]
     );
-    res.json({ status: '✅ Ayudante creado correctamente' });
+    res.json({ status: '✅ Ayudante creado correctamente', generatedPassword: password});
   } catch (err) {
     console.error('❌ Error al crear ayudante:', err.message);
     res.status(500).json({ error: err.message });
