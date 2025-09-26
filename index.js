@@ -50,14 +50,14 @@ app.get('/ayudantes', async (req, res) => {
 app.post('/ayudantes', async (req, res) => {
   const { cedula, nombre, correo, nivel, facultad, carrera } = req.body;
   //contrasena aleatoria generada
-  const password = crypto.randomBytes(4).toString('hex'); 
+  const contraseña = crypto.randomBytes(4).toString('hex'); 
 
   try {
     await pool.query(
-      'INSERT INTO ayudante (cedula, nombre, correo, nivel, facultad, carrera, password) VALUES ($1, $2, $3, $4, $5, $6, $7)',
-      [cedula, nombre, correo, nivel, facultad, carrera, password]
+      'INSERT INTO ayudante (cedula, nombre, correo, nivel, facultad, carrera, contraseña) VALUES ($1, $2, $3, $4, $5, $6, $7)',
+      [cedula, nombre, correo, nivel, facultad, carrera, contraseña]
     );
-    res.json({ status: '✅ Ayudante creado correctamente', generatedPassword: password});
+    res.json({ status: '✅ Ayudante creado correctamente', generatedPassword: contraseña});
   } catch (err) {
     console.error('❌ Error al crear ayudante:', err.message);
     res.status(500).json({ error: err.message });
