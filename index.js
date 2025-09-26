@@ -66,12 +66,12 @@ app.post('/ayudantes', async (req, res) => {
 
 // Login administrador
 app.post('/admin/login', async (req, res) => {
-  const { correo, password } = req.body;
+  const { correo, contraseña } = req.body;
 
   try {
     const result = await pool.query(
-      'SELECT * FROM administrador WHERE correo = $1 AND password = $2',
-      [correo, password]
+      'SELECT * FROM administrador WHERE correo = $1 AND contraseña = $2',
+      [correo, contraseña]
     );
 
     if (result.rows.length === 0) {
