@@ -90,7 +90,7 @@ app.post('/supervisores', async (req, res) => {
   const { cedula, nombre, correo} = req.body;
   //contrasena aleatoria generada
   const contraseña = crypto.randomBytes(4).toString('hex'); 
-  
+
   try {
     await pool.query(
       'INSERT INTO supervisor (cedula, nombre, correo, contraseña) VALUES ($1, $2, $3, $4)',
@@ -131,20 +131,20 @@ app.get('/supervisores', async (req, res) => {
 // Listar todas las facultades
 app.get('/facultades', async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM facultad');
+    const result = await pool.query('SELECT nombre FROM facultad');
     res.json(result.rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// Listar carreras de una facultad específica
-app.get('/facultades/:id/carreras', async (req, res) => {
-  const { id } = req.params;
+// Listar carreras de una facultad específica (usando el nombre como FK)
+app.get('/facultades/:nombre/carreras', async (req, res) => {
+  const { nombre } = req.params;
   try {
     const result = await pool.query(
-      'SELECT * FROM carrera WHERE id_facultad = $1',
-      [id]
+      'SELECT nombre FROM carrera WHERE facultad_nombre = $1',
+      [nombre]
     );
     res.json(result.rows);
   } catch (err) {
