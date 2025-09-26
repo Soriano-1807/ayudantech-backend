@@ -36,7 +36,7 @@ app.get('/', (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 
-// Ejemplo: listar ayudantes
+//listar ayudantes
 app.get('/ayudantes', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM ayudante');
@@ -57,13 +57,33 @@ app.post('/ayudantes', async (req, res) => {
       'INSERT INTO ayudante (cedula, nombre, correo, nivel, facultad, carrera, contraseña) VALUES ($1, $2, $3, $4, $5, $6, $7)',
       [cedula, nombre, correo, nivel, facultad, carrera, contraseña]
     );
-    res.json({ status: '✅ Ayudante creado correctamente', generatedPassword: contraseña});
+    res.json({ status: '✅ Ayudante creado correctamente'});
   } catch (err) {
     console.error('❌ Error al crear ayudante:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
 
+// Login administrador
+app.post('/admin/login', async (req, res) => {
+  const { correo, password } = req.body;
+
+  try {
+    const result = await pool.query(
+      'SELECT * FROM administrador WHERE correo = $1 AND password = $2',
+      [correo, password]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(401).json({ error: '❌ Credenciales inválidas' });
+    }
+
+    res.json({ status: '✅ Login exitoso como administrador' });
+  } catch (err) {
+    console.error('❌ Error al intentar login admin:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // Servidor
 app.listen(PORT, () => {
