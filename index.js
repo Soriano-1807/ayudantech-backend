@@ -59,6 +59,27 @@ app.post('/admin/login', async (req, res) => {
   }
 });
 
+// Login ayudante
+app.post('/ayudantes/login', async (req, res) => {
+  const { correo, contraseña } = req.body;
+
+  try {
+    const result = await pool.query(
+      'SELECT * FROM ayudante WHERE correo = $1 AND contraseña = $2',
+      [correo, contraseña]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(401).json({ error: '❌ Credenciales inválidas' });
+    }
+
+    res.json({ status: '✅ Login exitoso como ayudante' });
+  } catch (err) {
+    console.error('❌ Error en login ayudante:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 //listar ayudantes
 app.get('/ayudantes', async (req, res) => {
   try {
@@ -124,13 +145,13 @@ app.delete('/ayudantes/:cedula', async (req, res) => {
 // Modificar estudiante
 app.put('/ayudantes/:cedula', async (req, res) => {
   const { cedula } = req.params;
-  const { nombre, correo, nivel, facultad, carrera, contraseña } = req.body;
+  const { nombre, correo, nivel, facultad, carrera } = req.body;
   try {
     const result = await pool.query(
       `UPDATE ayudante 
-       SET nombre = $1, correo = $2, nivel = $3, facultad = $4, carrera = $5, contraseña = $6
-       WHERE cedula = $7 RETURNING *`,
-      [nombre, correo, nivel, facultad, carrera, contraseña, cedula]
+       SET nombre = $1, correo = $2, nivel = $3, facultad = $4, carrera = $5
+       WHERE cedula = $6 RETURNING *`,
+      [nombre, correo, nivel, facultad, carrera, cedula]
     );
     if (result.rowCount === 0) {
       return res.status(404).json({ error: 'Ayudante no encontrado' });
@@ -140,6 +161,28 @@ app.put('/ayudantes/:cedula', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// Login supervisor
+app.post('/supervisores/login', async (req, res) => {
+  const { correo, contraseña } = req.body;
+
+  try {
+    const result = await pool.query(
+      'SELECT * FROM supervisor WHERE correo = $1 AND contraseña = $2',
+      [correo, contraseña]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(401).json({ error: '❌ Credenciales inválidas' });
+    }
+
+    res.json({ status: '✅ Login exitoso como supervisor' });
+  } catch (err) {
+    console.error('❌ Error en login supervisor:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 
 // Crear supervisor
 app.post('/supervisores', async (req, res) => {
@@ -179,13 +222,13 @@ app.delete('/supervisores/:cedula', async (req, res) => {
 // Modificar supervisor
 app.put('/supervisores/:cedula', async (req, res) => {
   const { cedula } = req.params;
-  const { nombre, correo, contraseña } = req.body;
+  const { nombre, correo } = req.body;
   try {
     const result = await pool.query(
       `UPDATE supervisor 
-       SET nombre = $1, correo = $2, contraseña = $3
-       WHERE cedula = $4 RETURNING *`,
-      [nombre, correo, contraseña, cedula]
+       SET nombre = $1, correo = $2
+       WHERE cedula = $3 RETURNING *`,
+      [nombre, correo, cedula]
     );
     if (result.rowCount === 0) {
       return res.status(404).json({ error: 'Supervisor no encontrado' });
