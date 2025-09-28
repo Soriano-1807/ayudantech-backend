@@ -90,7 +90,7 @@ app.get('/ayudantes', async (req, res) => {
   }
 });
 
-// Buscar eayudante por cédula
+// Buscar ayudante por cédula
 app.get('/ayudantes/:cedula', async (req, res) => {
   const { cedula } = req.params;
   try {
@@ -125,7 +125,7 @@ app.post('/ayudantes', async (req, res) => {
   }
 });
 
-// Eliminar estudiante
+// Eliminar ayudante
 app.delete('/ayudantes/:cedula', async (req, res) => {
   const { cedula } = req.params;
   try {
@@ -142,7 +142,7 @@ app.delete('/ayudantes/:cedula', async (req, res) => {
   }
 });
 
-// Modificar estudiante
+// Modificar ayudante
 app.put('/ayudantes/:cedula', async (req, res) => {
   const { cedula } = req.params;
   const { nombre, correo, nivel, facultad, carrera } = req.body;
