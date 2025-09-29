@@ -288,6 +288,81 @@ app.get('/facultades/:nombre/carreras', async (req, res) => {
   }
 });
 
+// Crear plaza
+app.post('/plazas', async (req, res) => {
+  const { nombre } = req.body;
+  try {
+    await pool.query(
+      'INSERT INTO plaza (nombre) VALUES ($1)',
+      [nombre]
+    );
+    res.json({ status: '✅ Plaza creada correctamente' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Listar todas las plazas
+app.get('/plazas', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM plaza');
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Buscar plaza por nombre
+app.get('/plazas/:nombre', async (req, res) => {
+  const { nombre } = req.params;
+  try {
+    const result = await pool.query(
+      'SELECT * FROM plaza WHERE nombre = $1',
+      [nombre]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Plaza no encontrada' });
+    }
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Modificar plaza
+app.put('/plazas/:nombre', async (req, res) => {
+  const { nombre } = req.params;
+  const { nuevoNombre } = req.body;
+  try {
+    const result = await pool.query(
+      'UPDATE plaza SET nombre = $1 WHERE nombre = $2 RETURNING *',
+      [nuevoNombre, nombre]
+    );
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: 'Plaza no encontrada' });
+    }
+    res.json({ status: '✅ Plaza modificada correctamente' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Eliminar plaza
+app.delete('/plazas/:nombre', async (req, res) => {
+  const { nombre } = req.params;
+  try {
+    const result = await pool.query(
+      'DELETE FROM plaza WHERE nombre = $1 RETURNING *',
+      [nombre]
+    );
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: 'Plaza no encontrada' });
+    }
+    res.json({ status: '✅ Plaza eliminada correctamente' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // Servidor
 app.listen(PORT, () => {
