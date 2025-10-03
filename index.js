@@ -107,18 +107,29 @@ app.get('/ayudantes/:cedula', async (req, res) => {
   }
 });
 
-//crear ayudante
+// Crear ayudante
 app.post('/ayudantes', async (req, res) => {
   const { cedula, nombre, correo, nivel, facultad, carrera } = req.body;
-  //contrasena aleatoria generada
-  const contraseña = crypto.randomBytes(4).toString('hex'); 
+  // contraseña aleatoria generada
+  const contraseña = crypto.randomBytes(4).toString('hex');
 
   try {
+    // Verificar si la cédula ya existe en la tabla supervisor
+    const checkSupervisor = await pool.query(
+      'SELECT 1 FROM supervisor WHERE cedula = $1',
+      [cedula]
+    );
+    if (checkSupervisor.rows.length > 0) {
+      return res.status(400).json({ error: '❌ Ya existe un supervisor con esa cédula' });
+    }
+
+    // Insertar ayudante si no existe en ninguna de las tablas
     await pool.query(
       'INSERT INTO ayudante (cedula, nombre, correo, nivel, facultad, carrera, contraseña) VALUES ($1, $2, $3, $4, $5, $6, $7)',
       [cedula, nombre, correo, nivel, facultad, carrera, contraseña]
     );
-    res.json({ status: '✅ Ayudante creado correctamente'});
+
+    res.json({ status: '✅ Ayudante creado correctamente' });
   } catch (err) {
     console.error('❌ Error al crear ayudante:', err.message);
     res.status(500).json({ error: err.message });
@@ -186,21 +197,33 @@ app.post('/supervisores/login', async (req, res) => {
 
 // Crear supervisor
 app.post('/supervisores', async (req, res) => {
-  const { cedula, nombre, correo} = req.body;
-  //contrasena aleatoria generada
-  const contraseña = crypto.randomBytes(4).toString('hex'); 
+  const { cedula, nombre, correo } = req.body;
+  // contraseña aleatoria generada
+  const contraseña = crypto.randomBytes(4).toString('hex');
 
   try {
+    // Verificar si la cédula ya existe en la tabla ayudante
+    const checkAyudante = await pool.query(
+      'SELECT 1 FROM ayudante WHERE cedula = $1',
+      [cedula]
+    );
+    if (checkAyudante.rows.length > 0) {
+      return res.status(400).json({ error: '❌ Ya existe un ayudante con esa cédula' });
+    }
+
+    // Insertar supervisor si no existe en ninguna de las tablas
     await pool.query(
       'INSERT INTO supervisor (cedula, nombre, correo, contraseña) VALUES ($1, $2, $3, $4)',
       [cedula, nombre, correo, contraseña]
     );
+
     res.json({ status: '✅ Supervisor creado correctamente' });
   } catch (err) {
     console.error('❌ Error al crear supervisor:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
+
 
 // Eliminar supervisor
 app.delete('/supervisores/:cedula', async (req, res) => {
