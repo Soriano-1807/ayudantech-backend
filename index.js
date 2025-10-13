@@ -556,17 +556,19 @@ app.post('/periodos', async (req, res) => {
   const { nombre, actual } = req.body;
 
   try {
-    // Validar que no exista ya un período con ese nombre
+    // Verificar si ya existe un periodo con ese nombre
     const check = await pool.query('SELECT 1 FROM periodo WHERE nombre = $1', [nombre]);
     if (check.rows.length > 0) {
       return res.status(400).json({ error: '❌ Ya existe un período con ese nombre' });
     }
 
-    // Insertar nuevo período
-    await pool.query(
-      'INSERT INTO periodo (nombre, actual) VALUES ($1, $2)',
-      [nombre, actual]
-    );
+    // Si el nuevo período se marcará como actual, desactivar los demás
+    if (actual === true) {
+      await pool.query('UPDATE periodo SET actual = false WHERE actual = true');
+    }
+
+    // Insertar el nuevo período
+    await pool.query('INSERT INTO periodo (nombre, actual) VALUES ($1, $2)', [nombre, actual]);
 
     res.json({ status: '✅ Período creado correctamente' });
   } catch (err) {
@@ -581,6 +583,11 @@ app.put('/periodos/:nombre/actual', async (req, res) => {
   const { actual } = req.body; // true o false
 
   try {
+    // Si lo vas a marcar como actual, desactiva los demás
+    if (actual === true) {
+      await pool.query('UPDATE periodo SET actual = false WHERE actual = true');
+    }
+
     const result = await pool.query(
       'UPDATE periodo SET actual = $1 WHERE nombre = $2 RETURNING *',
       [actual, nombre]
@@ -596,6 +603,23 @@ app.put('/periodos/:nombre/actual', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// Obtener el período que está actualmente activo
+app.get('/periodos/actual', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM periodo WHERE actual = true');
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: '❌ No hay un período activo actualmente' });
+    }
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('❌ Error al obtener período actual:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 
 
 
