@@ -107,6 +107,28 @@ app.get('/ayudantes/:cedula', async (req, res) => {
   }
 });
 
+// BUscar ayudante por correo
+app.get('/ayudantes/correo/:correo', async (req, res) => {
+  const { correo } = req.params;
+
+  try {
+    const result = await pool.query(
+      'SELECT * FROM ayudante WHERE correo = $1',
+      [correo]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: '❌ Ayudante no encontrado' });
+    }
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('❌ Error al obtener ayudante por correo:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
 // Crear ayudante
 app.post('/ayudantes', async (req, res) => {
   const { cedula, nombre, correo, nivel, facultad, carrera } = req.body;
@@ -505,6 +527,30 @@ app.put('/ayudantias/:id/objetivo', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// Obtener ayudantía por cédula del ayudante
+app.get('/ayudantias/cedula/:cedula', async (req, res) => {
+  const { cedula } = req.params;
+
+  try {
+    const result = await pool.query(
+      `SELECT id, cedula_ayudante, cedula_supervisor, plaza, desc_objetivo, tipo_ayudante
+       FROM ayudantia
+       WHERE cedula_ayudante = $1`,
+      [cedula]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: '❌ No se encontró ninguna ayudantía para esa cédula' });
+    }
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('❌ Error al obtener ayudantía por cédula:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 
 
 // Servidor
