@@ -387,79 +387,50 @@ app.delete('/plazas/:nombre', async (req, res) => {
   }
 });
 
-//Crear Ayudantía
+// Crear ayudantía
 app.post('/ayudantias', async (req, res) => {
-    // Extraemos los datos del cuerpo de la solicitud
-    const { 
-        cedula_ayudante, cedula_supervisor, plaza, tipo_ayudante} = req.body;
+  const { cedula_ayudante, cedula_supervisor, plaza, tipo_ayudante } = req.body;
 
-    // 'desc_objetivo' se deja vacío (cadena vacía) por requisito, 
-    // lo que se mapeará a una cadena vacía en la DB o NULL, 
-    // dependiendo de la definición de su columna. Usaremos cadena vacía.
-    const desc_objetivo = ''; 
-
-    // 1. Validar que los campos requeridos no estén vacíos
-    if (!cedula_ayudante || !cedula_supervisor || !plaza || !tipo_ayudante) {
-        return res.status(400).json({ 
-            error: '❌ Faltan datos requeridos. Asegúrese de enviar cedula_ayudante, cedula_supervisor, plaza y tipo_ayudante.' 
-        });
+  try {
+    // Verificar que el ayudante exista
+    const checkAyudante = await pool.query(
+      'SELECT 1 FROM ayudante WHERE cedula = $1',
+      [cedula_ayudante]
+    );
+    if (checkAyudante.rows.length === 0) {
+      return res.status(400).json({ error: '❌ La cédula del ayudante no existe' });
     }
 
-    // 2. Definir la consulta SQL para la inserción
-    // Usamos $1, $2, etc., para prevenir ataques de inyección SQL
-    const text = `
-        INSERT INTO ayudantia(
-            cedula_ayudante, 
-            cedula_supervisor, 
-            plaza, 
-            desc_objetivo, 
-            tipo_ayudante
-        )
-        VALUES($1, $2, $3, $4, $5) 
-        RETURNING id; -- Usamos RETURNING para obtener el ID de la fila insertada
-    `;
-    
-    // 3. Array con los valores a insertar
-    const values = [
-        cedula_ayudante, 
-        cedula_supervisor, 
-        plaza, 
-        desc_objetivo, // <-- Este valor se inserta como cadena vacía
-        tipo_ayudante
-    ];
-
-    try {
-        // Ejecutar la consulta en PostgreSQL
-        const result = await pool.query(text, values);
-        
-        // Obtener el ID de la nueva fila
-        const newId = result.rows[0].id;
-
-        // Respuesta exitosa
-        res.status(201).json({ 
-            status: '✅ Ayudantía creada correctamente', 
-            id: newId,
-            datos_enviados: req.body
-        });
-
-    } catch (err) {
-        // Manejo de errores de PostgreSQL
-        console.error('❌ Error al crear la ayudantía:', err.message);
-        
-        // Podrías añadir lógica específica de manejo de errores de DB (ej. clave foránea)
-        if (err.message.includes('foreign key constraint')) {
-             return res.status(400).json({ 
-                error: '❌ Error de clave foránea. Asegúrese de que el ayudante y el supervisor existan.',
-                details: err.message
-            });
-        }
-        
-        // Respuesta genérica de error del servidor
-        res.status(500).json({ 
-            error: '❌ Error interno del servidor al crear la ayudantía', 
-            details: err.message 
-        });
+    // Verificar que el supervisor exista
+    const checkSupervisor = await pool.query(
+      'SELECT 1 FROM supervisor WHERE cedula = $1',
+      [cedula_supervisor]
+    );
+    if (checkSupervisor.rows.length === 0) {
+      return res.status(400).json({ error: '❌ La cédula del supervisor no existe' });
     }
+
+    // Verificar que el ayudante no tenga ya una ayudantía registrada
+    const checkDuplicado = await pool.query(
+      'SELECT 1 FROM ayudantia WHERE cedula_ayudante = $1',
+      [cedula_ayudante]
+    );
+    if (checkDuplicado.rows.length > 0) {
+      return res.status(400).json({ error: '❌ Este ayudante ya tiene una ayudantía registrada' });
+    }
+
+    // Insertar nueva ayudantía con desc_objetivo vacío
+    await pool.query(
+      `INSERT INTO ayudantia (cedula_ayudante, cedula_supervisor, plaza, desc_objetivo, tipo_ayudante)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [cedula_ayudante, cedula_supervisor, plaza, '', tipo_ayudante]
+    );
+
+    res.json({ status: '✅ Ayudantía creada correctamente' });
+  } catch (err) {
+    console.error('❌ Error al crear ayudantía:', err.message);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // Servidor
