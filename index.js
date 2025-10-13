@@ -433,6 +433,17 @@ app.post('/ayudantias', async (req, res) => {
   }
 });
 
+// Listar todos los tipos de ayudante
+app.get('/tipos-ayudante', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM tipo_ayudante ORDER BY tipo ASC');
+    res.json(result.rows);
+  } catch (err) {
+    console.error('❌ Error al obtener los tipos de ayudante:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Servidor
 app.listen(PORT, () => {
   console.log(`🚀 Backend corriendo en el puerto ${PORT}`);
