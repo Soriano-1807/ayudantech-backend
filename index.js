@@ -444,6 +444,22 @@ app.get('/tipos-ayudante', async (req, res) => {
   }
 });
 
+// Listar todas las ayudantías (solo columnas propias de la tabla)
+app.get('/ayudantias', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT id, cedula_ayudante, cedula_supervisor, plaza, desc_objetivo, tipo_ayudante
+      FROM ayudantia
+      ORDER BY id ASC
+    `);
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error('❌ Error al obtener ayudantías:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Servidor
 app.listen(PORT, () => {
   console.log(`🚀 Backend corriendo en el puerto ${PORT}`);
