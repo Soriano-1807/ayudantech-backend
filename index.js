@@ -460,6 +460,53 @@ app.get('/ayudantias', async (req, res) => {
   }
 });
 
+// Eliminar ayudantía por ID
+app.delete('/ayudantias/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const result = await pool.query(
+      'DELETE FROM ayudantia WHERE id = $1 RETURNING *',
+      [id]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: '❌ Ayudantía no encontrada' });
+    }
+
+    res.json({ status: '✅ Ayudantía eliminada correctamente' });
+  } catch (err) {
+    console.error('❌ Error al eliminar ayudantía:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Modificar únicamente el desc_objetivo de una ayudantía
+app.put('/ayudantias/:id/objetivo', async (req, res) => {
+  const { id } = req.params;
+  const { desc_objetivo } = req.body;
+
+  try {
+    const result = await pool.query(
+      `UPDATE ayudantia
+       SET desc_objetivo = $1
+       WHERE id = $2
+       RETURNING *`,
+      [desc_objetivo, id]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: '❌ Ayudantía no encontrada' });
+    }
+
+    res.json({ status: '✅ Descripción del objetivo actualizada correctamente' });
+  } catch (err) {
+    console.error('❌ Error al actualizar desc_objetivo:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
 // Servidor
 app.listen(PORT, () => {
   console.log(`🚀 Backend corriendo en el puerto ${PORT}`);
