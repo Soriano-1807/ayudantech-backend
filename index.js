@@ -551,6 +551,53 @@ app.get('/ayudantias/cedula/:cedula', async (req, res) => {
   }
 });
 
+// Crear un nuevo período
+app.post('/periodos', async (req, res) => {
+  const { nombre, actual } = req.body;
+
+  try {
+    // Validar que no exista ya un período con ese nombre
+    const check = await pool.query('SELECT 1 FROM periodo WHERE nombre = $1', [nombre]);
+    if (check.rows.length > 0) {
+      return res.status(400).json({ error: '❌ Ya existe un período con ese nombre' });
+    }
+
+    // Insertar nuevo período
+    await pool.query(
+      'INSERT INTO periodo (nombre, actual) VALUES ($1, $2)',
+      [nombre, actual]
+    );
+
+    res.json({ status: '✅ Período creado correctamente' });
+  } catch (err) {
+    console.error('❌ Error al crear período:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Modificar el estado "actual" de un período
+app.put('/periodos/:nombre/actual', async (req, res) => {
+  const { nombre } = req.params;
+  const { actual } = req.body; // true o false
+
+  try {
+    const result = await pool.query(
+      'UPDATE periodo SET actual = $1 WHERE nombre = $2 RETURNING *',
+      [actual, nombre]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: '❌ Período no encontrado' });
+    }
+
+    res.json({ status: '✅ Estado del período actualizado correctamente' });
+  } catch (err) {
+    console.error('❌ Error al actualizar período:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
 
 
 // Servidor
