@@ -867,6 +867,44 @@ app.put('/ventana-aprob', async (req, res) => {
   }
 });
 
+// Listar todas las actividades de una ayudantía específica
+app.get('/actividades/ayudantia/:id_ayudantia', async (req, res) => {
+  const { id_ayudantia } = req.params;
+
+  try {
+    // Verificar que la ayudantía exista
+    const check = await pool.query(
+      'SELECT 1 FROM ayudantia WHERE id = $1',
+      [id_ayudantia]
+    );
+
+    if (check.rows.length === 0) {
+      return res.status(404).json({ error: '❌ La ayudantía no existe' });
+    }
+
+    // Buscar las actividades asociadas a esa ayudantía
+    const result = await pool.query(
+      `SELECT id, fecha, descripcion, evidencia, periodo
+       FROM actividades
+       WHERE id_ayudantia = $1
+       ORDER BY fecha DESC`,
+      [id_ayudantia]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        mensaje: '⚠️ Esta ayudantía no tiene actividades registradas aún.'
+      });
+    }
+
+    res.status(200).json(result.rows);
+  } catch (err) {
+    console.error('❌ Error al obtener actividades por ayudantía:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
 // Servidor
 app.listen(PORT, () => {
   console.log(`🚀 Backend corriendo en el puerto ${PORT}`);
