@@ -638,6 +638,148 @@ app.get('/periodos', async (req, res) => {
   }
 });
 
+// Crear nueva actividad
+app.post('/actividades', async (req, res) => {
+  const { id_ayudantia, descripcion, evidencia } = req.body;
+
+  try {
+    // Verificar que la ayudantía exista
+    const checkAyudantia = await pool.query(
+      'SELECT 1 FROM ayudantia WHERE id = $1',
+      [id_ayudantia]
+    );
+    if (checkAyudantia.rows.length === 0) {
+      return res.status(400).json({ error: '❌ La ayudantía no existe' });
+    }
+
+    // Obtener el período activo
+    const periodoActivo = await pool.query(
+      'SELECT nombre FROM periodo WHERE actual = true'
+    );
+    if (periodoActivo.rows.length === 0) {
+      return res.status(400).json({ error: '❌ No hay un período activo actualmente' });
+    }
+
+    const periodo = periodoActivo.rows[0].nombre;
+    const fecha = new Date().toISOString().split('T')[0]; // formato YYYY-MM-DD
+
+    // Insertar la nueva actividad
+    await pool.query(
+      `INSERT INTO actividades (id_ayudantia, fecha, descripcion, evidencia, periodo)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [id_ayudantia, fecha, descripcion, evidencia, periodo]
+    );
+
+    res.json({ status: '✅ Actividad creada correctamente' });
+  } catch (err) {
+    console.error('❌ Error al crear actividad:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Listar todas las actividades
+app.get('/actividades', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT id, id_ayudantia, fecha, descripcion, evidencia, periodo
+       FROM actividades
+       ORDER BY fecha DESC`
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error('❌ Error al obtener actividades:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Modificar descripción y evidencia de una actividad
+app.put('/actividades/:id', async (req, res) => {
+  const { id } = req.params;
+  const { descripcion, evidencia } = req.body;
+
+  try {
+    const result = await pool.query(
+      `UPDATE actividades
+       SET descripcion = $1, evidencia = $2
+       WHERE id = $3
+       RETURNING *`,
+      [descripcion, evidencia, id]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: '❌ Actividad no encontrada' });
+    }
+
+    res.json({ status: '✅ Actividad actualizada correctamente' });
+  } catch (err) {
+    console.error('❌ Error al actualizar actividad:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Eliminar una actividad por ID
+app.delete('/actividades/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const result = await pool.query(
+      'DELETE FROM actividades WHERE id = $1 RETURNING *',
+      [id]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: '❌ Actividad no encontrada' });
+    }
+
+    res.json({ status: '✅ Actividad eliminada correctamente' });
+  } catch (err) {
+    console.error('❌ Error al eliminar actividad:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Listar actividades por la cédula del ayudante
+app.get('/actividades/ayudante/:cedula', async (req, res) => {
+  const { cedula } = req.params;
+
+  try {
+    // Verificar que el ayudante tenga una ayudantía registrada
+    const ayudantia = await pool.query(
+      'SELECT id FROM ayudantia WHERE cedula_ayudante = $1',
+      [cedula]
+    );
+
+    if (ayudantia.rows.length === 0) {
+      return res.status(404).json({
+        error: '❌ Este ayudante no tiene una ayudantía registrada.'
+      });
+    }
+
+    const id_ayudantia = ayudantia.rows[0].id;
+
+    // Buscar todas las actividades asociadas a esa ayudantía
+    const actividades = await pool.query(
+      `SELECT id, id_ayudantia, fecha, descripcion, evidencia, periodo
+       FROM actividades
+       WHERE id_ayudantia = $1
+       ORDER BY fecha DESC`,
+      [id_ayudantia]
+    );
+
+    if (actividades.rows.length === 0) {
+      return res.status(404).json({
+        error: '❌ No hay actividades registradas para este ayudante.'
+      });
+    }
+
+    res.json(actividades.rows);
+  } catch (err) {
+    console.error('❌ Error al obtener actividades por cédula del ayudante:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
 // Servidor
 app.listen(PORT, () => {
   console.log(`🚀 Backend corriendo en el puerto ${PORT}`);
