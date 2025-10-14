@@ -638,7 +638,7 @@ app.get('/periodos', async (req, res) => {
   }
 });
 
-// Crear nueva actividad
+// Crear nueva actividad (con fecha de Caracas)
 app.post('/actividades', async (req, res) => {
   const { id_ayudantia, descripcion, evidencia } = req.body;
 
@@ -661,21 +661,30 @@ app.post('/actividades', async (req, res) => {
     }
 
     const periodo = periodoActivo.rows[0].nombre;
-    const fecha = new Date().toISOString().split('T')[0]; // formato YYYY-MM-DD
 
-    // Insertar la nueva actividad
-    await pool.query(
+    // Obtener la fecha local de Caracas
+    const now = new Date();
+    const offsetMs = -4 * 60 * 60 * 1000; // GMT-4 (Caracas)
+    const fecha = new Date(now.getTime() + offsetMs).toISOString().split('T')[0];
+
+    // Insertar nueva actividad
+    const nuevaActividad = await pool.query(
       `INSERT INTO actividades (id_ayudantia, fecha, descripcion, evidencia, periodo)
-       VALUES ($1, $2, $3, $4, $5)`,
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING id, id_ayudantia, fecha, descripcion, evidencia, periodo`,
       [id_ayudantia, fecha, descripcion, evidencia, periodo]
     );
 
-    res.json({ status: '✅ Actividad creada correctamente' });
+    res.status(201).json({
+      status: '✅ Actividad creada correctamente',
+      actividad: nuevaActividad.rows[0]
+    });
   } catch (err) {
     console.error('❌ Error al crear actividad:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
+
 
 // Listar todas las actividades
 app.get('/actividades', async (req, res) => {
