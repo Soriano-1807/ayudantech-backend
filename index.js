@@ -820,16 +820,15 @@ app.delete('/periodos/:nombre', async (req, res) => {
 // Obtener el estado actual de la ventana de aprobación
 app.get('/ventana-aprob', async (req, res) => {
   try {
-    const result = await pool.query('SELECT id, activa FROM ventana_aprob LIMIT 1');
+    const result = await pool.query('SELECT activa FROM ventana_aprob LIMIT 1');
 
     if (result.rows.length === 0) {
       return res.status(404).json({ error: '❌ No se encontró la ventana de aprobación' });
     }
 
     res.status(200).json({
-      estado: result.rows[0].activa ? '✅ Activa' : '⛔ Inactiva',
       activa: result.rows[0].activa,
-      id: result.rows[0].id
+      estado: result.rows[0].activa ? '✅ Ventana activa' : '⛔ Ventana cerrada'
     });
   } catch (err) {
     console.error('❌ Error al obtener ventana_aprob:', err.message);
@@ -838,8 +837,7 @@ app.get('/ventana-aprob', async (req, res) => {
 });
 
 // Cambiar el estado de la ventana de aprobación
-app.put('/ventana-aprob/:id', async (req, res) => {
-  const { id } = req.params;
+app.put('/ventana-aprob', async (req, res) => {
   const { activa } = req.body; // true o false
 
   if (typeof activa !== 'boolean') {
@@ -848,8 +846,8 @@ app.put('/ventana-aprob/:id', async (req, res) => {
 
   try {
     const result = await pool.query(
-      'UPDATE ventana_aprob SET activa = $1 WHERE id = $2 RETURNING id, activa',
-      [activa, id]
+      'UPDATE ventana_aprob SET activa = $1 WHERE id = (SELECT id FROM ventana_aprob LIMIT 1) RETURNING activa',
+      [activa]
     );
 
     if (result.rowCount === 0) {
@@ -858,7 +856,10 @@ app.put('/ventana-aprob/:id', async (req, res) => {
 
     res.status(200).json({
       status: '✅ Estado actualizado correctamente',
-      nuevaVentana: result.rows[0]
+      nuevaVentana: {
+        activa: result.rows[0].activa,
+        estado: result.rows[0].activa ? '✅ Ventana activa' : '⛔ Ventana cerrada'
+      }
     });
   } catch (err) {
     console.error('❌ Error al actualizar ventana_aprob:', err.message);
