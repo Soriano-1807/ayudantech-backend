@@ -663,9 +663,11 @@ app.post('/actividades', async (req, res) => {
     const periodo = periodoActivo.rows[0].nombre;
 
     // Obtener la fecha local de Caracas
-    const now = new Date();
-    const offsetMs = -4 * 60 * 60 * 1000; // GMT-4 (Caracas)
-    const fecha = new Date(now.getTime() + offsetMs).toISOString().split('T')[0];
+    const { DateTime } = require('luxon');
+
+    // Fecha y hora exactas de Caracas
+    const fecha = DateTime.now().setZone('America/Caracas').toISO(); 
+
 
     // Insertar nueva actividad
     const nuevaActividad = await pool.query(
