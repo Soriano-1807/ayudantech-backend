@@ -817,7 +817,54 @@ app.delete('/periodos/:nombre', async (req, res) => {
   }
 });
 
+// Obtener el estado actual de la ventana de aprobación
+app.get('/ventana-aprob', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT id, activa FROM ventana_aprob LIMIT 1');
 
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: '❌ No se encontró la ventana de aprobación' });
+    }
+
+    res.status(200).json({
+      estado: result.rows[0].activa ? '✅ Activa' : '⛔ Inactiva',
+      activa: result.rows[0].activa,
+      id: result.rows[0].id
+    });
+  } catch (err) {
+    console.error('❌ Error al obtener ventana_aprob:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Cambiar el estado de la ventana de aprobación
+app.put('/ventana-aprob/:id', async (req, res) => {
+  const { id } = req.params;
+  const { activa } = req.body; // true o false
+
+  if (typeof activa !== 'boolean') {
+    return res.status(400).json({ error: '⚠️ El valor de "activa" debe ser true o false' });
+  }
+
+  try {
+    const result = await pool.query(
+      'UPDATE ventana_aprob SET activa = $1 WHERE id = $2 RETURNING id, activa',
+      [activa, id]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: '❌ No se encontró la ventana de aprobación' });
+    }
+
+    res.status(200).json({
+      status: '✅ Estado actualizado correctamente',
+      nuevaVentana: result.rows[0]
+    });
+  } catch (err) {
+    console.error('❌ Error al actualizar ventana_aprob:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // Servidor
 app.listen(PORT, () => {
