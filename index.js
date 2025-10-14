@@ -788,6 +788,36 @@ app.get('/actividades/ayudante/:cedula', async (req, res) => {
   }
 });
 
+// Eliminar un período (no se permite eliminar el período actual)
+app.delete('/periodos/:nombre', async (req, res) => {
+  const { nombre } = req.params;
+
+  try {
+    // Verificar si el período existe
+    const check = await pool.query('SELECT actual FROM periodo WHERE nombre = $1', [nombre]);
+
+    if (check.rows.length === 0) {
+      return res.status(404).json({ error: '❌ El período no existe' });
+    }
+
+    // Si el período está marcado como actual, no se puede eliminar
+    if (check.rows[0].actual === true) {
+      return res.status(400).json({
+        error: '⚠️ No se puede eliminar el período actual. Primero desactívalo antes de eliminarlo.'
+      });
+    }
+
+    // Eliminar el período
+    await pool.query('DELETE FROM periodo WHERE nombre = $1', [nombre]);
+
+    res.json({ status: '✅ Período eliminado correctamente' });
+  } catch (err) {
+    console.error('❌ Error al eliminar período:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
 
 // Servidor
 app.listen(PORT, () => {
