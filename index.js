@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');
 const crypto = require('crypto');
+const { DateTime } = require('luxon');
 require('dotenv').config();
 
 const app = express();
@@ -662,9 +663,6 @@ app.post('/actividades', async (req, res) => {
 
     const periodo = periodoActivo.rows[0].nombre;
 
-    // Obtener la fecha local de Caracas
-    const { DateTime } = require('luxon');
-
     // Fecha y hora exactas de Caracas
     const fecha = DateTime.now().setZone('America/Caracas').toISO(); 
 
@@ -696,7 +694,16 @@ app.get('/actividades', async (req, res) => {
        FROM actividades
        ORDER BY fecha DESC`
     );
-    res.json(result.rows);
+
+    // Convertir las fechas a la zona horaria de Caracas y formatearlas
+    const actividades = result.rows.map(a => ({
+      ...a,
+      fecha: DateTime.fromJSDate(a.fecha)
+        .setZone('America/Caracas')
+        .toFormat('yyyy-MM-dd')
+    }));
+
+    res.json(actividades);
   } catch (err) {
     console.error('❌ Error al obtener actividades:', err.message);
     res.status(500).json({ error: err.message });
