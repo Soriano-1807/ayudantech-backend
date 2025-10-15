@@ -977,6 +977,83 @@ app.get('/supervisores/correo/:correo', async (req, res) => {
   }
 });
 
+// Crear aprobación de ayudantía
+app.post('/aprobado', async (req, res) => {
+  const { id_ayudantia } = req.body;
+
+  try {
+    // Buscar periodo actual
+    const periodoActual = await pool.query(
+      'SELECT nombre FROM periodo WHERE actual = true LIMIT 1'
+    );
+
+    if (periodoActual.rows.length === 0) {
+      return res.status(400).json({ error: '❌ No hay un período activo actualmente.' });
+    }
+
+    const periodo = periodoActual.rows[0].nombre;
+
+    // Insertar nueva aprobación
+    const nuevaAprobacion = await pool.query(
+      `INSERT INTO aprobado (id_ayudantia, periodo)
+       VALUES ($1, $2)
+       RETURNING id, id_ayudantia, periodo`,
+      [id_ayudantia, periodo]
+    );
+
+    res.status(201).json({
+      status: '✅ Aprobación registrada correctamente',
+      aprobado: nuevaAprobacion.rows[0]
+    });
+  } catch (err) {
+    console.error('❌ Error al crear aprobación:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Obtener ayudantías aprobadas por período
+app.get('/aprobado/periodo/:nombre', async (req, res) => {
+  const { nombre } = req.params;
+
+  try {
+    const result = await pool.query(
+      `SELECT a.id, a.id_ayudantia, a.periodo
+       FROM aprobado a
+       WHERE a.periodo = $1`,
+      [nombre]
+    );
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error('❌ Error al obtener aprobaciones:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Obtener período de aprobación por ayudantía
+app.get('/aprobado/ayudantia/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const result = await pool.query(
+      `SELECT periodo
+       FROM aprobado
+       WHERE id_ayudantia = $1
+       LIMIT 1`,
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: '❌ Esta ayudantía no tiene período registrado.' });
+    }
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('❌ Error al obtener período de ayudantía:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 
 // Servidor
 app.listen(PORT, () => {
