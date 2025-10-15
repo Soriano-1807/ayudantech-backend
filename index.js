@@ -678,7 +678,7 @@ app.post('/actividades', async (req, res) => {
     res.status(201).json({
       status: '✅ Actividad creada correctamente',
       actividad: nuevaActividad.rows[0]
-    });
+    })
   } catch (err) {
     console.error('❌ Error al crear actividad:', err.message);
     res.status(500).json({ error: err.message });
@@ -912,6 +912,56 @@ app.get('/actividades/ayudantia/:id_ayudantia', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// Obtener todas las ayudantías de un supervisor
+app.get('/ayudantias/supervisor/:cedula', async (req, res) => {
+  const { cedula } = req.params;
+
+  try {
+    const result = await pool.query(
+      `SELECT id, cedula_ayudante, cedula_supervisor, plaza, desc_objetivo, tipo_ayudante
+       FROM ayudantia
+       WHERE cedula_supervisor = $1
+       ORDER BY id DESC`,
+      [cedula]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: '❌ No se encontraron ayudantías para este supervisor' });
+    }
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error('❌ Error al obtener ayudantías por supervisor:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Obtener todos los ayudantes que tiene un supervisor a cargo
+app.get('/ayudantes/supervisor/:cedula', async (req, res) => {
+  const { cedula } = req.params;
+
+  try {
+    const result = await pool.query(
+      `SELECT a.cedula, a.nombre, a.correo, a.nivel, a.facultad, a.carrera, ay.plaza, ay.tipo_ayudante
+       FROM ayudante a
+       INNER JOIN ayudantia ay ON ay.cedula_ayudante = a.cedula
+       WHERE ay.cedula_supervisor = $1
+       ORDER BY a.nombre ASC`,
+      [cedula]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: '❌ Este supervisor no tiene ayudantes registrados' });
+    }
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error('❌ Error al obtener ayudantes por supervisor:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 
 
 // Servidor
