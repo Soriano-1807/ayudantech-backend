@@ -159,7 +159,7 @@ app.post('/ayudantes', async (req, res) => {
   }
 });
 
-// Eliminar estudiante
+// Eliminar ayudante
 app.delete('/ayudantes/:cedula', async (req, res) => {
   const { cedula } = req.params;
   try {
@@ -176,7 +176,7 @@ app.delete('/ayudantes/:cedula', async (req, res) => {
   }
 });
 
-// Modificar estudiante
+// Modificar ayudante
 app.put('/ayudantes/:cedula', async (req, res) => {
   const { cedula } = req.params;
   const { nombre, correo, nivel, facultad, carrera } = req.body;
@@ -695,15 +695,7 @@ app.get('/actividades', async (req, res) => {
        ORDER BY fecha DESC`
     );
 
-    // Convertir las fechas a la zona horaria de Caracas y formatearlas
-    const actividades = result.rows.map(a => ({
-      ...a,
-      fecha: DateTime.fromJSDate(a.fecha)
-        .setZone('America/Caracas')
-        .toFormat('yyyy-MM-dd')
-    }));
-
-    res.json(actividades);
+    res.json(result.rows);
   } catch (err) {
     console.error('❌ Error al obtener actividades:', err.message);
     res.status(500).json({ error: err.message });
