@@ -954,6 +954,28 @@ app.get('/ayudantes/supervisor/:cedula', async (req, res) => {
   }
 });
 
+// Obtener supervisor por correo
+app.get('/supervisores/correo/:correo', async (req, res) => {
+  const { correo } = req.params;
+
+  try {
+    const result = await pool.query(
+      `SELECT cedula, nombre, correo, contraseña
+       FROM supervisor
+       WHERE correo = $1`,
+      [correo]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: '❌ No se encontró ningún supervisor con ese correo' });
+    }
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('❌ Error al obtener supervisor por correo:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
 
 
 // Servidor
@@ -961,3 +983,4 @@ app.listen(PORT, () => {
   console.log(`🚀 Backend corriendo en el puerto ${PORT}`);
   console.log('🌐 En producción, accede con la URL de Railway.');
 });
+
