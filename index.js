@@ -663,8 +663,8 @@ app.post('/actividades', async (req, res) => {
 
     const periodo = periodoActivo.rows[0].nombre;
 
-    // Fecha y hora exactas de Caracas
-    const fecha = DateTime.now().setZone('America/Caracas').toISO(); 
+    // Fecha y hora actuales en UTC (universal)
+    const fecha = DateTime.utc().toISO(); // ej: "2025-10-14T13:45:22.000Z"
 
 
     // Insertar nueva actividad
