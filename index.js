@@ -1064,7 +1064,7 @@ app.get('/aprobado/ayudantia/:id', async (req, res) => {
 });
 
 // Obtener detalles de todas las ayudantías aprobadas
-app.get('/aprobados/detalles', async (req, res) => {
+app.get('/aprobado/detalles', async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT
