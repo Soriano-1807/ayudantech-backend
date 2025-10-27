@@ -397,6 +397,15 @@ app.put('/plazas/:nombre', async (req, res) => {
 app.delete('/plazas/:nombre', async (req, res) => {
   const { nombre } = req.params;
   try {
+    // Verificar si la plaza tiene ayudantías asignadas
+    const checkAyudantias = await pool.query(
+      'SELECT 1 FROM ayudantia WHERE plaza = $1',
+      [nombre]
+    );
+    if (checkAyudantias.rows.length > 0) {
+      return res.status(409).json({ error: '❌ No se puede eliminar, la plaza tiene ayudantías asignadas.' });
+    }
+    
     const result = await pool.query(
       'DELETE FROM plaza WHERE nombre = $1 RETURNING *',
       [nombre]
@@ -1054,10 +1063,30 @@ app.get('/aprobado/ayudantia/:id', async (req, res) => {
   }
 });
 
+// Obtener detalles de todas las ayudantías aprobadas
+app.get('/aprobados/detalles', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT
+        ayu.nombre AS nombre_ayudante,
+        sup.nombre AS nombre_supervisor,
+        ayt.plaza
+      FROM aprobado AS ap
+      JOIN ayudantia AS ayt ON ap.id_ayudantia = ayt.id
+      JOIN ayudante AS ayu ON ayt.cedula_ayudante = ayu.cedula
+      JOIN supervisor AS sup ON ayt.cedula_supervisor = sup.cedula
+      ORDER BY ayu.nombre ASC
+    `);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('❌ Error al obtener detalles de ayudantías aprobadas:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 
 // Servidor
 app.listen(PORT, () => {
   console.log(`🚀 Backend corriendo en el puerto ${PORT}`);
   console.log('🌐 En producción, accede con la URL de Railway.');
 });
-
