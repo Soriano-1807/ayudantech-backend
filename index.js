@@ -1107,26 +1107,42 @@ app.get('/aprobado/ayudantia/:id', async (req, res) => {
   }
 });
 
-// Obtener detalles de todas las ayudantías aprobadas
+//obtener detalles de las ayudantias aprobadas en el periodo actual
 app.get('/aprobado/detalles', async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT
         ayu.nombre AS nombre_ayudante,
         sup.nombre AS nombre_supervisor,
-        ayt.plaza
+        ayt.plaza,
+        ap.periodo
       FROM aprobado AS ap
       JOIN ayudantia AS ayt ON ap.id_ayudantia = ayt.id
       JOIN ayudante AS ayu ON ayt.cedula_ayudante = ayu.cedula
       JOIN supervisor AS sup ON ayt.cedula_supervisor = sup.cedula
-      ORDER BY ayu.nombre ASC
+      JOIN periodo AS p ON ap.periodo = p.nombre
+      WHERE p.actual = true
+      ORDER BY ayu.nombre ASC;
     `);
-    res.json(result.rows);
+
+    if (result.rows.length === 0) {
+      return res.json({
+        status: '✅ No hay ayudantías aprobadas en el período actual',
+        ayudantias_aprobadas: []
+      });
+    }
+
+    res.json({
+      status: '✅ Ayudantías aprobadas del período actual',
+      ayudantias_aprobadas: result.rows
+    });
+
   } catch (err) {
     console.error('❌ Error al obtener detalles de ayudantías aprobadas:', err.message);
     res.status(500).json({ error: err.message });
   }
-}); 
+});
+
 
 
 
