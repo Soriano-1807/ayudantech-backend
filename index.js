@@ -1107,61 +1107,26 @@ app.get('/aprobado/ayudantia/:id', async (req, res) => {
   }
 });
 
-// Obtener detalles de todas las ayudantías aprobadas del período actual
+// Obtener detalles de todas las ayudantías aprobadas
 app.get('/aprobado/detalles', async (req, res) => {
   try {
-    // 1️⃣ Obtener el período actual
-    const periodoActual = await pool.query(
-      'SELECT nombre FROM periodo WHERE actual = true LIMIT 1'
-    );
-
-    if (periodoActual.rows.length === 0) {
-      return res
-        .status(404)
-        .json({ error: '❌ No hay un período activo actualmente' });
-    }
-
-    const periodo = periodoActual.rows[0].nombre;
-
-    // 2️⃣ Obtener las ayudantías aprobadas del período activo
-    const result = await pool.query(
-      `
+    const result = await pool.query(`
       SELECT
         ayu.nombre AS nombre_ayudante,
         sup.nombre AS nombre_supervisor,
-        ayt.plaza,
-        ap.periodo
+        ayt.plaza
       FROM aprobado AS ap
       JOIN ayudantia AS ayt ON ap.id_ayudantia = ayt.id
       JOIN ayudante AS ayu ON ayt.cedula_ayudante = ayu.cedula
       JOIN supervisor AS sup ON ayt.cedula_supervisor = sup.cedula
-      WHERE ap.periodo = $1
       ORDER BY ayu.nombre ASC
-      `,
-      [periodo]
-    );
-
-    if (result.rows.length === 0) {
-      return res.json({
-        status: '✅ No hay ayudantías aprobadas en el período actual',
-        periodo_actual: periodo,
-        ayudantias: [],
-      });
-    }
-
-    res.json({
-      status: '✅ Ayudantías aprobadas encontradas',
-      periodo_actual: periodo,
-      ayudantias: result.rows,
-    });
+    `);
+    res.json(result.rows);
   } catch (err) {
-    console.error(
-      '❌ Error al obtener detalles de ayudantías aprobadas:',
-      err.message
-    );
+    console.error('❌ Error al obtener detalles de ayudantías aprobadas:', err.message);
     res.status(500).json({ error: err.message });
   }
-});
+}); 
 
 
 
